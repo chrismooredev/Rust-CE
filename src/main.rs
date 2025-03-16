@@ -2,12 +2,14 @@
 #![no_main]
 
 #[no_mangle]
-unsafe fn main() {
+unsafe fn rust_main() -> i8 {
     os_ClrLCD();
     os_HomeUp();
     os_DrawStatusBar();
     os_PutStrFull(b"Hello from Rust!\x00");
     while os_GetCSC() == 0 {}
+
+    return 0;
 }
 
 #[panic_handler]
