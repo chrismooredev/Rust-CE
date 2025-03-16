@@ -1,0 +1,64 @@
+name: Build 8xp
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    # The matrix is more to test building with the Rust and CE toolchain on different OSes more than anything else
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Install the Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install CE-Dev Toolchain
+        shell: pwsh
+        run: |
+          if("${{runner.os}}" -eq 'Windows') {
+            curl -L https://github.com/CE-Programming/toolchain/releases/download/${env:CE_VERSION}/CEdev-Windows.zip -o CEdev-Windows.zip
+            Expand-Archive -Path CEdev-Windows.zip -DestinationPath . -Force
+          } elseif("${{runner.os}}" -eq 'Linux') {
+            curl -L https://github.com/CE-Programming/toolchain/releases/download/${env:CE_VERSION}/CEdev-Linux.tar.gz -o CEdev-Linux.tar.gz
+            tar -xzf CEdev-Linux.tar.gz
+          } else {
+            # macOS unimplemented due to usage of dmg distribution unfamiliar to the maintainer. PRs welcomed.
+            Write-Error "Unknown platform: $($PSVersionTable.Platform) with OS $($PSVersionTable.OS)"
+            exit 1
+          }
+          Set-Content $env:GITHUB_PATH "$(Resolve-Path CEdev/bin)"
+        env:
+          CE_VERSION: v12.1
+
+      - name: Checkout Rust-CE
+        uses: actions/checkout@v4
+        with:
+          path: repo
+  
+      - name: Build project
+        run: |
+          cd repo
+          make
+      
+      - name: Assemble Release Folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory release
+          Copy-Item -Path repo/bin/*.8xp -Destination release
+          $readme = if (Test-Path repo/README-calc.md) { "README-calc.md" } else { "README.md" }
+          Copy-Item -Path repo/$readme -Destination release/README.md
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: release
+          name: build-${{runner.os}}

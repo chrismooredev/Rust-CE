@@ -22,3 +22,6 @@ This uses the include files from the [CE-Programming toolchain](https://github.c
 - Find your 8xp binary in the bin/ folder
     - The 8xp name can be changed at the top of the makefile
 - `make clean` to clean up
+
+## Release
+A GitHub Actions workflow is included. It produces an artifact containing the built 8xp and either the README-calc.md file, or if missing, this README.md file.
