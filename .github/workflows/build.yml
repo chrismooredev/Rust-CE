@@ -19,7 +19,9 @@ jobs:
       - name: Install the Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: nightly-2022-08-13
           targets: wasm32-unknown-unknown
+          components: rust-src
 
       - name: Install CE-Dev Toolchain
         shell: pwsh
